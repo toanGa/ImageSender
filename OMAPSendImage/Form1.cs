@@ -16,20 +16,12 @@ namespace OMAPSendImage
 {
     public partial class Form1 : Form
     {
-        enum Command
-        {
-            CMD_NON,
-            CMD_SEND,
-            CMD_RECV,
-        }
-
-
         ManualResetEvent RecvEvent = new ManualResetEvent(false);
         ConcurrentQueue<Byte[]> mQueueRecv = new ConcurrentQueue<Byte[]>();
         BackgroundWorker Worker = new BackgroundWorker();
         Bitmap OmapBMP = new Bitmap(240, 320, PixelFormat.Format24bppRgb);
-        Command mCommand;
-    
+        int LenDataRecv = 0;
+
         public Form1()
         {
             InitializeComponent();
@@ -57,51 +49,68 @@ namespace OMAPSendImage
             
         }
 
+        static int lenRecv = 0;
+        byte[] arrRecv = new byte[240 * 320 * 3];
         void HandlerSerialRecev()
         {
             byte[] deqArr;
             int bytesRecv;
-            int i;
+            int i, j;
             int row = 0;
             int col = 0;
+            int idxPixel = 0;
+            
+            byte readByte;
 
-            serialPortOmap.Write("START_IMG");
+            serialPortOmap.DiscardInBuffer();
+
+            serialPortOmap.Write("IMG START");
 
             while(true)
             {
-                TraceLog("Receiver Wait");
-                RecvEvent.Reset();
-                RecvEvent.WaitOne();
-
-                bool status = mQueueRecv.TryDequeue(out deqArr);
-
-                if (status)
+                readByte = (byte)serialPortOmap.ReadByte();
+                arrRecv[lenRecv] = readByte;
+                lenRecv++;
+                if (lenRecv >= 240 * 320 * 3)
                 {
-                    bytesRecv = deqArr.Length;
-                    for(i = 0; i < bytesRecv; i += 3)
-                    {
-                        OmapBMP.SetPixel(row, col, Color.FromArgb(deqArr[i], deqArr[i + 1], deqArr[i + 2]));
+                    TraceLog("Receive full package");
 
-                        col++;
-                        if(col >= 240)
-                        {
-                            col = 0;
-                            row++;
-                            if(row == 320)
-                            {
-                                // Finish Receive sequence
-                                return;
-                            }
-                        }
-                    }
-                    TraceLog("Receiver: Write SEND_ME");
-                    serialPortOmap.Write("SEND_ME");
+                    break;
                 }
+                else
+                {
+                    //Console.WriteLine(lenRecv);
+                }
+            }
+
+            int idxSetPixel = 0;
+            Color setColor;
+            for (i = 0; i < 240; i++)
+            {
+                for (j = 0; j < 320; j ++)
+                {
+                    setColor = Color.FromArgb(arrRecv[idxSetPixel], arrRecv[idxSetPixel + 1], arrRecv[idxSetPixel + 2]);
+                    OmapBMP.SetPixel(i, j, setColor);
+                    idxSetPixel += 3;
+                }
+            }
+
+            if (InvokeRequired)
+            {
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    pictureBox1.Image = new Bitmap(OmapBMP);
+                });
+            }
+            else
+            {
+                pictureBox1.Image = new Bitmap(OmapBMP);
             }
         }
 
         void TraceLog(string log)
         {
+#if false
             if (InvokeRequired)
             {
                 BeginInvoke((MethodInvoker)delegate
@@ -113,83 +122,24 @@ namespace OMAPSendImage
             {
                 textBoxLOG.AppendText(log + "\r\n");
             }
-        }
-
-        private void serialPortOmap_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
-            SerialPort comport = sender as SerialPort;
-
-            if(mCommand == Command.CMD_RECV)
-            {
-                int bytes = comport.BytesToRead;
-                byte[] buffer = new byte[bytes];
-                comport.Read(buffer, 0, bytes);
-
-                mQueueRecv.Enqueue(buffer);
-                TraceLog("Receiver: Set");
-                RecvEvent.Set();
-            }
-            else if(mCommand == Command.CMD_SEND)
-            {
-                string content = comport.ReadExisting();
-                if(content == "SEND_ME" || true)
-                {
-                    TraceLog("SEND_ME received");
-                    TraceLog("Sender: Set");
-                    RecvEvent.Set();
-                }
-            }
-
+#else
+            Console.WriteLine(log);
+#endif
         }
 
         private void buttonGetImage_Click(object sender, EventArgs e)
         {
-            mCommand = Command.CMD_RECV;
-
             if (!Worker.IsBusy)
             {
                 Worker.RunWorkerAsync();
+
             }
         }
 
         private void buttonSendImage_Click(object sender, EventArgs e)
         {
-            string imgPath = textBoxLinkIMG.Text;
-
-            Bitmap img = (Bitmap)Image.FromFile(imgPath);
-            Color color;
-            int row, col;
-            int i, j;
-            byte[] sendPixel = new byte[3];
-
-            mCommand = Command.CMD_SEND;
-
-            row = img.Height;
-            col = img.Width;
-            
-            for(i = 0; i < row; i++)
-            {
-                for(j = 0; j < col; j++)
-                {
-                    color = img.GetPixel(i, j);
-                    sendPixel[0] = color.R;
-                    sendPixel[1] = color.G;
-                    sendPixel[2] = color.B;
-
-                    serialPortOmap.Write(sendPixel, 0, sendPixel.Length);
-
-                    TraceLog("Send " + i + "\r\n");
-
-                    if (i < row - 1)
-                    {
-                        TraceLog("Sender: Wait");
-                        RecvEvent.Reset();
-                        RecvEvent.WaitOne();
-                    }
-                }
-
-
-            }
+            ImageSender imgsender = new ImageSender();
+            imgsender.Show();
         }
 
         private void buttonOpenPort_Click(object sender, EventArgs e)

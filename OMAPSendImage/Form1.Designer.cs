@@ -45,18 +45,20 @@
             // 
             // pictureBox1
             // 
-            this.pictureBox1.Location = new System.Drawing.Point(260, 78);
+            this.pictureBox1.Location = new System.Drawing.Point(195, 63);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(240, 320);
+            this.pictureBox1.Size = new System.Drawing.Size(180, 260);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
             // buttonGetImage
             // 
-            this.buttonGetImage.Location = new System.Drawing.Point(22, 148);
+            this.buttonGetImage.Location = new System.Drawing.Point(16, 120);
+            this.buttonGetImage.Margin = new System.Windows.Forms.Padding(2);
             this.buttonGetImage.Name = "buttonGetImage";
-            this.buttonGetImage.Size = new System.Drawing.Size(175, 62);
+            this.buttonGetImage.Size = new System.Drawing.Size(131, 50);
             this.buttonGetImage.TabIndex = 1;
             this.buttonGetImage.Text = "Get Image";
             this.buttonGetImage.UseVisualStyleBackColor = true;
@@ -65,30 +67,32 @@
             // serialPortOmap
             // 
             this.serialPortOmap.BaudRate = 115200;
-            this.serialPortOmap.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(this.serialPortOmap_DataReceived);
             // 
             // comboBoxOmapCOM
             // 
             this.comboBoxOmapCOM.FormattingEnabled = true;
-            this.comboBoxOmapCOM.Location = new System.Drawing.Point(17, 38);
+            this.comboBoxOmapCOM.Location = new System.Drawing.Point(13, 31);
+            this.comboBoxOmapCOM.Margin = new System.Windows.Forms.Padding(2);
             this.comboBoxOmapCOM.Name = "comboBoxOmapCOM";
-            this.comboBoxOmapCOM.Size = new System.Drawing.Size(121, 24);
+            this.comboBoxOmapCOM.Size = new System.Drawing.Size(92, 21);
             this.comboBoxOmapCOM.TabIndex = 2;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(14, 11);
+            this.label1.Location = new System.Drawing.Point(10, 9);
+            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(39, 17);
+            this.label1.Size = new System.Drawing.Size(31, 13);
             this.label1.TabIndex = 3;
             this.label1.Text = "COM";
             // 
             // buttonSendImage
             // 
-            this.buttonSendImage.Location = new System.Drawing.Point(22, 234);
+            this.buttonSendImage.Location = new System.Drawing.Point(16, 190);
+            this.buttonSendImage.Margin = new System.Windows.Forms.Padding(2);
             this.buttonSendImage.Name = "buttonSendImage";
-            this.buttonSendImage.Size = new System.Drawing.Size(175, 62);
+            this.buttonSendImage.Size = new System.Drawing.Size(131, 50);
             this.buttonSendImage.TabIndex = 4;
             this.buttonSendImage.Text = "Send Image";
             this.buttonSendImage.UseVisualStyleBackColor = true;
@@ -96,17 +100,19 @@
             // 
             // textBoxLinkIMG
             // 
-            this.textBoxLinkIMG.Location = new System.Drawing.Point(260, 37);
+            this.textBoxLinkIMG.Location = new System.Drawing.Point(195, 30);
+            this.textBoxLinkIMG.Margin = new System.Windows.Forms.Padding(2);
             this.textBoxLinkIMG.Name = "textBoxLinkIMG";
-            this.textBoxLinkIMG.Size = new System.Drawing.Size(240, 22);
+            this.textBoxLinkIMG.Size = new System.Drawing.Size(181, 20);
             this.textBoxLinkIMG.TabIndex = 5;
-            this.textBoxLinkIMG.Text = "C:\\Users\\thuyd\\Desktop\\Apple2.jpg";
+            this.textBoxLinkIMG.Text = "C:\\Users\\tranvantoan\\Desktop\\bg2.png";
             // 
             // buttonOpenPort
             // 
-            this.buttonOpenPort.Location = new System.Drawing.Point(17, 68);
+            this.buttonOpenPort.Location = new System.Drawing.Point(13, 55);
+            this.buttonOpenPort.Margin = new System.Windows.Forms.Padding(2);
             this.buttonOpenPort.Name = "buttonOpenPort";
-            this.buttonOpenPort.Size = new System.Drawing.Size(121, 34);
+            this.buttonOpenPort.Size = new System.Drawing.Size(91, 28);
             this.buttonOpenPort.TabIndex = 6;
             this.buttonOpenPort.Text = "Open";
             this.buttonOpenPort.UseVisualStyleBackColor = true;
@@ -118,31 +124,34 @@
             this.panel1.Controls.Add(this.label1);
             this.panel1.Controls.Add(this.buttonOpenPort);
             this.panel1.Controls.Add(this.comboBoxOmapCOM);
-            this.panel1.Location = new System.Drawing.Point(12, 12);
+            this.panel1.Location = new System.Drawing.Point(9, 10);
+            this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(185, 113);
+            this.panel1.Size = new System.Drawing.Size(139, 92);
             this.panel1.TabIndex = 7;
             // 
             // textBoxLOG
             // 
-            this.textBoxLOG.Location = new System.Drawing.Point(547, 80);
+            this.textBoxLOG.Location = new System.Drawing.Point(410, 65);
+            this.textBoxLOG.Margin = new System.Windows.Forms.Padding(2);
             this.textBoxLOG.Multiline = true;
             this.textBoxLOG.Name = "textBoxLOG";
             this.textBoxLOG.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxLOG.Size = new System.Drawing.Size(272, 318);
+            this.textBoxLOG.Size = new System.Drawing.Size(205, 259);
             this.textBoxLOG.TabIndex = 8;
             // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(858, 436);
+            this.ClientSize = new System.Drawing.Size(644, 354);
             this.Controls.Add(this.textBoxLOG);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.textBoxLinkIMG);
             this.Controls.Add(this.buttonSendImage);
             this.Controls.Add(this.buttonGetImage);
             this.Controls.Add(this.pictureBox1);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Form1";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
