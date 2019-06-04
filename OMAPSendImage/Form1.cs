@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
@@ -45,8 +46,7 @@ namespace OMAPSendImage
 
         private void WaitWorkerComplete(object sender, RunWorkerCompletedEventArgs e)
         {
-            MessageBox.Show("Worker Complete");
-            
+            //MessageBox.Show("Worker Complete");
         }
 
         static int lenRecv = 0;
@@ -100,12 +100,15 @@ namespace OMAPSendImage
                 BeginInvoke((MethodInvoker)delegate
                 {
                     pictureBox1.Image = new Bitmap(OmapBMP);
+                    buttonSave.Enabled = true;
                 });
             }
             else
             {
                 pictureBox1.Image = new Bitmap(OmapBMP);
+                buttonSave.Enabled = true;
             }
+            
         }
 
         void TraceLog(string log)
@@ -132,7 +135,6 @@ namespace OMAPSendImage
             if (!Worker.IsBusy)
             {
                 Worker.RunWorkerAsync();
-
             }
         }
 
@@ -153,6 +155,40 @@ namespace OMAPSendImage
             {
                 MessageBox.Show("Serial port is open in another process");
             }
+        }
+
+        private void buttonSave_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog dialog = new SaveFileDialog()
+            {
+                Title = "Save Image file",
+
+                DefaultExt = "png",
+                Filter = "Image files (*.png)|*.png",
+                FilterIndex = 2,
+                RestoreDirectory = true,
+            };
+
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                if(File.Exists(dialog.FileName))
+                {
+                    DialogResult dialogResult = MessageBox.Show("Override file?", "File existed", MessageBoxButtons.YesNo);
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        OmapBMP.Save(dialog.FileName, ImageFormat.Jpeg);
+                    }
+                    else if (dialogResult == DialogResult.No)
+                    {
+                        //do something else
+                    }
+                }
+                else
+                {
+                    OmapBMP.Save(dialog.FileName, ImageFormat.Jpeg);
+                }
+            }
+
         }
     }
 }

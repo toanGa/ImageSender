@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
@@ -46,7 +47,7 @@ namespace OMAPSendImage
             };
             Worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(WaitWorkerComplete);
 
-            Worker.RunWorkerAsync();
+            
         }
 
         private void WaitWorkerComplete(object sender, RunWorkerCompletedEventArgs e)
@@ -99,7 +100,7 @@ namespace OMAPSendImage
 
             DateTime done = DateTime.Now;
 
-            MessageBox.Show(String.Format("Start: {0}, Done {1}", start.ToString(), done.ToString()));
+            //MessageBox.Show(String.Format("Start: {0}, Done {1}", start.ToString(), done.ToString()));
         }
 
         void TraceLog(string log)
@@ -154,6 +155,42 @@ namespace OMAPSendImage
             else
             {
                 MessageBox.Show("Serial port is open in another process");
+            }
+        }
+
+        private void buttonOpen_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog1 = new OpenFileDialog
+            {
+                InitialDirectory = @"D:\",
+                Title = "Open Image to Send",
+
+                CheckFileExists = true,
+                CheckPathExists = true,
+
+                RestoreDirectory = true,
+
+                ReadOnlyChecked = true,
+                ShowReadOnly = true
+            };
+
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                textBoxLinkIMG.Text = openFileDialog1.FileName;
+                pictureBox1.Image = Image.FromFile(textBoxLinkIMG.Text);
+            }
+        }
+
+        private void buttonRun_Click(object sender, EventArgs e)
+        {
+            if(!File.Exists(textBoxLinkIMG.Text))
+            {
+                MessageBox.Show("File not existed!");
+                return;
+            }
+            if(!Worker.IsBusy)
+            {
+                Worker.RunWorkerAsync();
             }
         }
     }
