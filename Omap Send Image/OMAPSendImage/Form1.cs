@@ -160,27 +160,10 @@ namespace OMAPSendImage
             {
                 serialPortOmap.PortName = comboBoxOmapCOM.Text;
                 serialPortOmap.Open();
-                buttonOpenPort.Text = "Close";
             }
             else
             {
-                
-                if (!Worker.IsBusy)
-                {
-                    try
-                    {
-                        serialPortOmap.Close();
-                        buttonOpenPort.Text = "Open";
-                    }
-                    catch(Exception ex)
-                    {
-                        MessageBox.Show(ex.Message);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Worker is busy");
-                }
+                MessageBox.Show("Serial port is open in another process");
             }
         }
 
@@ -223,7 +206,7 @@ namespace OMAPSendImage
             if(hasImage)
             {
                 DateTime dt = DateTime.Now;
-                string nameFileSave = string.Format("{0}_{1}_{2}_{3}h{4}m{5}s.png", dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second);
+                string nameFileSave = string.Format("{0}_{1}_{2}_{3}_{4}_{5}.png", dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second);
                 string foder = textBoxFoderSaveImage.Text;
                 if (!Directory.Exists(foder))
                 {
@@ -232,7 +215,7 @@ namespace OMAPSendImage
 
                 string saveFile = foder + "\\" + nameFileSave;
                 OmapBMP.Save(saveFile, ImageFormat.Png);
-                TraceLog("Saved file: " + Path.GetFullPath(saveFile));
+                TraceLog("Saved file: " + saveFile);
             }
         }
 
