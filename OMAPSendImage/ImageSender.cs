@@ -79,11 +79,11 @@ namespace OMAPSendImage
             }
 
             DateTime start = DateTime.Now;
-            for (i = 0; i < width; i++)
+            for (i = 0; i < height; i++)
             {
-                for (j = 0; j < height; j++)
+                for (j = 0; j < width; j++)
                 {
-                    color = img.GetPixel(i, j);
+                    color = img.GetPixel(j, i);
                     sendPixel[0] = color.R;
                     sendPixel[1] = color.G;
                     sendPixel[2] = color.B;

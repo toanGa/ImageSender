@@ -47,26 +47,34 @@ namespace OMAPSendImage
         private void WaitWorkerComplete(object sender, RunWorkerCompletedEventArgs e)
         {
             //MessageBox.Show("Worker Complete");
+            TraceLog("Receive Image complete!");
         }
 
         static int lenRecv = 0;
         byte[] arrRecv = new byte[240 * 320 * 3];
+        bool hasImage = false;
         void HandlerSerialRecev()
         {
-            byte[] deqArr;
-            int bytesRecv;
             int i, j;
-            int row = 0;
-            int col = 0;
-            int idxPixel = 0;
-            
             byte readByte;
+
+            if (InvokeRequired)
+            {
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    buttonSave.Enabled = false;
+                });
+            }
+            else
+            {
+                buttonSave.Enabled = false;
+            }
 
             serialPortOmap.DiscardInBuffer();
 
             serialPortOmap.Write("IMG START");
-
-            while(true)
+            lenRecv = 0;
+            while (true)
             {
                 readByte = (byte)serialPortOmap.ReadByte();
                 arrRecv[lenRecv] = readByte;
@@ -85,12 +93,12 @@ namespace OMAPSendImage
 
             int idxSetPixel = 0;
             Color setColor;
-            for (i = 0; i < 240; i++)
+            for (i = 0; i < 320; i++)
             {
-                for (j = 0; j < 320; j ++)
+                for (j = 0; j < 240; j ++)
                 {
                     setColor = Color.FromArgb(arrRecv[idxSetPixel], arrRecv[idxSetPixel + 1], arrRecv[idxSetPixel + 2]);
-                    OmapBMP.SetPixel(i, j, setColor);
+                    OmapBMP.SetPixel(j, i, setColor);
                     idxSetPixel += 3;
                 }
             }
@@ -101,19 +109,21 @@ namespace OMAPSendImage
                 {
                     pictureBox1.Image = new Bitmap(OmapBMP);
                     buttonSave.Enabled = true;
+                    hasImage = true;
                 });
             }
             else
             {
                 pictureBox1.Image = new Bitmap(OmapBMP);
                 buttonSave.Enabled = true;
+                hasImage = true;
             }
             
         }
 
         void TraceLog(string log)
         {
-#if false
+#if true
             if (InvokeRequired)
             {
                 BeginInvoke((MethodInvoker)delegate
@@ -159,6 +169,8 @@ namespace OMAPSendImage
 
         private void buttonSave_Click(object sender, EventArgs e)
         {
+            // using GUI to save file
+#if false
             SaveFileDialog dialog = new SaveFileDialog()
             {
                 Title = "Save Image file",
@@ -177,6 +189,7 @@ namespace OMAPSendImage
                     if (dialogResult == DialogResult.Yes)
                     {
                         OmapBMP.Save(dialog.FileName, ImageFormat.Jpeg);
+                        TraceLog("File saved");
                     }
                     else if (dialogResult == DialogResult.No)
                     {
@@ -186,9 +199,25 @@ namespace OMAPSendImage
                 else
                 {
                     OmapBMP.Save(dialog.FileName, ImageFormat.Jpeg);
+                    TraceLog("File saved");
                 }
             }
+#endif
+            if(hasImage)
+            {
+                DateTime dt = DateTime.Now;
+                string nameFileSave = string.Format("{0}_{1}_{2}_{3}_{4}_{5}.png", dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second);
+                string foder = textBoxFoderSaveImage.Text;
+                if (!Directory.Exists(foder))
+                {
+                    Directory.CreateDirectory(foder);
+                }
 
+                string saveFile = foder + "\\" + nameFileSave;
+                OmapBMP.Save(saveFile, ImageFormat.Png);
+                TraceLog("Saved file: " + saveFile);
+            }
         }
+
     }
 }
