@@ -235,6 +235,5 @@ namespace OMAPSendImage
                 TraceLog("Saved file: " + Path.GetFullPath(saveFile));
             }
         }
-
     }
 }

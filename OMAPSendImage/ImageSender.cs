@@ -20,10 +20,13 @@ namespace OMAPSendImage
     /// </summary>
     public partial class ImageSender : Form
     {
-        ManualResetEvent RecvEvent = new ManualResetEvent(false);
-        ManualResetEvent StartEvent = new ManualResetEvent(false);
+        public static readonly List<string> ImageExtensions = new List<string> { ".JPG", ".JPE", ".JPEG", ".BMP", ".GIF", ".PNG" };
+        const int BAUD_115200 = 115200;
+        const int BAUD_9600 = 9600;
+        const int BAUD_921600 = 921600;
+        bool Canced = false;
 
-        ConcurrentQueue<Byte[]> mQueueRecv = new ConcurrentQueue<Byte[]>();
+        ManualResetEvent StartEvent = new ManualResetEvent(false);
         BackgroundWorker Worker = new BackgroundWorker();
         Bitmap OmapBMP = new Bitmap(240, 320, PixelFormat.Format24bppRgb);
 
@@ -43,19 +46,23 @@ namespace OMAPSendImage
             Worker.WorkerSupportsCancellation = true;
             Worker.DoWork += delegate
             {
-                HandlerSerialRecev();
+                SendImageToOmap();
             };
             Worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(WaitWorkerComplete);
-
-            
         }
 
         private void WaitWorkerComplete(object sender, RunWorkerCompletedEventArgs e)
         {
-            MessageBox.Show("Send Image Complete");
+            TraceLog("Send Image Completed!");
+            buttonSend.Text = "Send";
+            if(Canced)
+            {
+                // Do some task with background worker canced
+                SetProgressBarValue(0);
+            }
         }
 
-        void HandlerSerialRecev()
+        void SendImageToOmap()
         {
             string imgPath = textBoxLinkIMG.Text;
             Bitmap img = (Bitmap)Image.FromFile(imgPath);
@@ -67,18 +74,41 @@ namespace OMAPSendImage
             height = img.Height;
             width = img.Width;
 
-            StartEvent.Reset();
-            StartEvent.WaitOne();
-            TraceLog("Have request Get Image");
-
-            if(serialPortOmap.IsOpen)
+            Canced = false;
+            //Set baudrate when request
+            if (serialPortOmap.IsOpen)
             {
                 serialPortOmap.Close();
-                serialPortOmap.DataReceived -= serialPortOmap_DataReceived;
-                serialPortOmap.Open();
             }
+            serialPortOmap.BaudRate = BAUD_115200;
+            serialPortOmap.DataReceived += serialPortOmap_DataReceived;
+            serialPortOmap.Open();
+
+            // clear buffer
+            serialPortOmap.DiscardInBuffer();
+
+            // Notify OMAP will be get image
+            serialPortOmap.Write("GET_IMG");
+ 
+            // Wait For OMAP respond
+            StartEvent.Reset();
+            StartEvent.WaitOne();
+            TraceLog("Start send Image data to OMAP");
+
+
+            if (serialPortOmap.IsOpen)
+            {
+                serialPortOmap.Close();
+            }
+            serialPortOmap.DataReceived -= serialPortOmap_DataReceived;
+            //serialPortOmap.BaudRate = BAUD_921600;
+            serialPortOmap.Open();
+
 
             DateTime start = DateTime.Now;
+
+            SetProgressBarValue(0);
+
             for (i = 0; i < height; i++)
             {
                 for (j = 0; j < width; j++)
@@ -90,17 +120,22 @@ namespace OMAPSendImage
 
                     //TraceLog("Send " + i + ":" + j + "\r\n");
                     serialPortOmap.Write(sendPixel, 0, sendPixel.Length);
-                    if(j % 20 == 0)
-                    {
-                        Thread.Sleep(1);
-                    }
-                    //Thread.Sleep(1);
+                    //if(j % 20 == 0)
+                    //{
+                    //    Thread.Sleep(1);
+                    //}
+                }
+                SetProgressBarValue(i + 1);
+                if(Worker.CancellationPending)
+                {
+                    TraceLog("Canced background worker!");
+                    Canced = true;
+                    return;
                 }
             }
-
             DateTime done = DateTime.Now;
 
-            //MessageBox.Show(String.Format("Start: {0}, Done {1}", start.ToString(), done.ToString()));
+           TraceLog(String.Format("Start: {0}, Done {1}", start.ToString(), done.ToString()));
         }
 
         void TraceLog(string log)
@@ -122,25 +157,37 @@ namespace OMAPSendImage
 #endif
         }
 
+        void SetProgressBarValue(int value)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    progressBarPercent.Value = value;
+                });
+            }
+            else
+            {
+                progressBarPercent.Value = value;
+            }
+        }
 
         private void serialPortOmap_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             SerialPort comport = sender as SerialPort;
             string content = comport.ReadExisting();
 
-            if (content == "IMG START")
-            {
-                StartEvent.Set();
-            }
-            else if (content == "SEND_ME")
+            if (content == "SEND_ME")
             {
                 TraceLog("SEND_ME received");
                 TraceLog("Sender: Set");
-                RecvEvent.Set();
+
+                Thread.Sleep(10);
+                StartEvent.Set();
             }
-            else if (content == "FINISH")
+            else
             {
-                TraceLog("FINISH Send image");
+                TraceLog(content);
             }
         }
 
@@ -149,12 +196,30 @@ namespace OMAPSendImage
             if (!serialPortOmap.IsOpen)
             {
                 serialPortOmap.PortName = comboBoxOmapCOM.Text;
-                serialPortOmap.Open();
-                TraceLog("Open serial port: " + serialPortOmap.PortName);
+                try
+                {
+                    serialPortOmap.Open();
+                    buttonOpenPort.Text = "Close";
+                    TraceLog("Open serial port: " + serialPortOmap.PortName);
+                }
+                catch(Exception ex)
+                {
+                    TraceLog(ex.Message);
+                }
             }
             else
             {
-                MessageBox.Show("Serial port is open in another process");
+                try
+                {
+                    serialPortOmap.Close();
+                    TraceLog("Close serial port: " + serialPortOmap.PortName);
+                }
+                catch
+                {
+                    MessageBox.Show("Serial port is open in another process");
+                }
+
+                buttonOpenPort.Text = "Open";
             }
         }
 
@@ -176,12 +241,40 @@ namespace OMAPSendImage
 
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                textBoxLinkIMG.Text = openFileDialog1.FileName;
-                pictureBox1.Image = Image.FromFile(textBoxLinkIMG.Text);
+                bool isImage = false;
+                string fileName = openFileDialog1.FileName;
+
+                foreach (string ext in ImageExtensions)
+                {
+                    if(fileName.ToUpper().Contains(ext))
+                    {
+                        isImage = true;
+                        break;
+                    }
+                }
+
+                if(isImage)
+                {
+                    Image img = Image.FromFile(fileName);
+                    if(img.Width == 240 && img.Height == 320)
+                    {
+                        textBoxLinkIMG.Text = fileName;
+                        pictureBox1.Image = img;
+                    }
+                    else
+                    {
+                        img.Dispose();
+                        MessageBox.Show("Image Dimension must be: 240 - 320");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("You must select a Image");
+                }
             }
         }
 
-        private void buttonRun_Click(object sender, EventArgs e)
+        private void buttonSend_Click(object sender, EventArgs e)
         {
             if(!File.Exists(textBoxLinkIMG.Text))
             {
@@ -191,7 +284,54 @@ namespace OMAPSendImage
             if(!Worker.IsBusy)
             {
                 Worker.RunWorkerAsync();
+                buttonSend.Text = "Cancel";
             }
+            else
+            {
+                Worker.CancelAsync();
+                buttonSend.Text = "Send";
+            }
+        }
+
+        private void comboBoxOmapCOM_Click(object sender, EventArgs e)
+        {
+            string[] ports = SerialPort.GetPortNames();
+            comboBoxOmapCOM.DataSource = ports;
+
+            if (ports.Length > 0)
+            {
+                comboBoxOmapCOM.Text = ports[0];
+            }
+        }
+
+        private void ImageSender_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if(serialPortOmap.IsOpen)
+            {
+                serialPortOmap.Close();
+            }
+        }
+
+        private void serialPortOmap_ErrorReceived(object sender, SerialErrorReceivedEventArgs e)
+        {
+
+        }
+
+        private void serialPortOmap_PinChanged(object sender, SerialPinChangedEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    buttonOpenPort.Text = "Open";
+                });
+            }
+            else
+            {
+                buttonOpenPort.Text = "Open";
+            }
+
+            TraceLog("Pin PORT has changed");
         }
     }
 }

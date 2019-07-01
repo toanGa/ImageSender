@@ -50,7 +50,7 @@
             // 
             this.pictureBox1.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.pictureBox1.Location = new System.Drawing.Point(196, 82);
-            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(240, 320);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -64,7 +64,7 @@
             this.buttonGetImage.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.buttonGetImage.ForeColor = System.Drawing.Color.White;
             this.buttonGetImage.Location = new System.Drawing.Point(11, 203);
-            this.buttonGetImage.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.buttonGetImage.Margin = new System.Windows.Forms.Padding(2);
             this.buttonGetImage.Name = "buttonGetImage";
             this.buttonGetImage.Size = new System.Drawing.Size(169, 50);
             this.buttonGetImage.TabIndex = 1;
@@ -81,7 +81,7 @@
             this.comboBoxOmapCOM.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.comboBoxOmapCOM.FormattingEnabled = true;
             this.comboBoxOmapCOM.Location = new System.Drawing.Point(14, 35);
-            this.comboBoxOmapCOM.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.comboBoxOmapCOM.Margin = new System.Windows.Forms.Padding(2);
             this.comboBoxOmapCOM.Name = "comboBoxOmapCOM";
             this.comboBoxOmapCOM.Size = new System.Drawing.Size(135, 25);
             this.comboBoxOmapCOM.TabIndex = 2;
@@ -105,7 +105,7 @@
             this.buttonSendImage.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.buttonSendImage.ForeColor = System.Drawing.Color.White;
             this.buttonSendImage.Location = new System.Drawing.Point(11, 273);
-            this.buttonSendImage.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.buttonSendImage.Margin = new System.Windows.Forms.Padding(2);
             this.buttonSendImage.Name = "buttonSendImage";
             this.buttonSendImage.Size = new System.Drawing.Size(169, 50);
             this.buttonSendImage.TabIndex = 4;
@@ -120,7 +120,7 @@
             this.buttonOpenPort.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.buttonOpenPort.ForeColor = System.Drawing.Color.White;
             this.buttonOpenPort.Location = new System.Drawing.Point(14, 68);
-            this.buttonOpenPort.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.buttonOpenPort.Margin = new System.Windows.Forms.Padding(2);
             this.buttonOpenPort.Name = "buttonOpenPort";
             this.buttonOpenPort.Size = new System.Drawing.Size(134, 31);
             this.buttonOpenPort.TabIndex = 6;
@@ -135,7 +135,7 @@
             this.panel1.Controls.Add(this.buttonOpenPort);
             this.panel1.Controls.Add(this.comboBoxOmapCOM);
             this.panel1.Location = new System.Drawing.Point(9, 67);
-            this.panel1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(171, 117);
             this.panel1.TabIndex = 7;
@@ -145,7 +145,7 @@
             this.textBoxLOG.BackColor = System.Drawing.SystemColors.WindowFrame;
             this.textBoxLOG.ForeColor = System.Drawing.Color.White;
             this.textBoxLOG.Location = new System.Drawing.Point(459, 82);
-            this.textBoxLOG.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.textBoxLOG.Margin = new System.Windows.Forms.Padding(2);
             this.textBoxLOG.Multiline = true;
             this.textBoxLOG.Name = "textBoxLOG";
             this.textBoxLOG.ScrollBars = System.Windows.Forms.ScrollBars.Both;
@@ -160,7 +160,7 @@
             this.buttonSave.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.buttonSave.ForeColor = System.Drawing.Color.White;
             this.buttonSave.Location = new System.Drawing.Point(196, 415);
-            this.buttonSave.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.buttonSave.Margin = new System.Windows.Forms.Padding(2);
             this.buttonSave.Name = "buttonSave";
             this.buttonSave.Size = new System.Drawing.Size(240, 33);
             this.buttonSave.TabIndex = 9;
@@ -220,7 +220,7 @@
             this.Controls.Add(this.buttonSendImage);
             this.Controls.Add(this.buttonGetImage);
             this.Controls.Add(this.pictureBox1);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Form1";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
