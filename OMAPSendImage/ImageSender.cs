@@ -78,10 +78,12 @@ namespace OMAPSendImage
             //Set baudrate when request
             if (serialPortOmap.IsOpen)
             {
+                TraceLog("Close 1");
                 serialPortOmap.Close();
             }
             serialPortOmap.BaudRate = BAUD_115200;
             serialPortOmap.DataReceived += serialPortOmap_DataReceived;
+            TraceLog("Open 1");
             serialPortOmap.Open();
 
             // clear buffer
@@ -92,16 +94,25 @@ namespace OMAPSendImage
  
             // Wait For OMAP respond
             StartEvent.Reset();
-            StartEvent.WaitOne();
+            bool waiteStatus = StartEvent.WaitOne(3000);
+
+            if(waiteStatus == false)
+            {
+                TraceLog("Timeout wait respond from OMAP!");
+                return;
+            }
+
             TraceLog("Start send Image data to OMAP");
 
 
             if (serialPortOmap.IsOpen)
             {
+                TraceLog("Close 2");
                 serialPortOmap.Close();
             }
             serialPortOmap.DataReceived -= serialPortOmap_DataReceived;
             //serialPortOmap.BaudRate = BAUD_921600;
+            TraceLog("Open 2");
             serialPortOmap.Open();
 
 
@@ -140,7 +151,7 @@ namespace OMAPSendImage
 
         void TraceLog(string log)
         {
-#if true
+#if false
             if (InvokeRequired)
             {
                 BeginInvoke((MethodInvoker)delegate
@@ -199,6 +210,7 @@ namespace OMAPSendImage
                 try
                 {
                     serialPortOmap.Open();
+                    TraceLog("Open 3");
                     buttonOpenPort.Text = "Close";
                     TraceLog("Open serial port: " + serialPortOmap.PortName);
                 }
@@ -211,6 +223,7 @@ namespace OMAPSendImage
             {
                 try
                 {
+                    TraceLog("Close 3");
                     serialPortOmap.Close();
                     TraceLog("Close serial port: " + serialPortOmap.PortName);
                 }
