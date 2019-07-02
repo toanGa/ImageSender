@@ -25,22 +25,25 @@ namespace OMAPSendImage
         const int BAUD_9600 = 9600;
         const int BAUD_921600 = 921600;
         bool Canced = false;
-
+        object LockSystemStatus = new object();
+        int mDotCount = 0;
         ManualResetEvent StartEvent = new ManualResetEvent(false);
+        ManualResetEvent TrackingEvent = new ManualResetEvent(false);
         BackgroundWorker Worker = new BackgroundWorker();
-        Bitmap OmapBMP = new Bitmap(240, 320, PixelFormat.Format24bppRgb);
+        BackgroundWorker TrackingWorker = new BackgroundWorker();
+        SystemStatus mSystemStatus = SystemStatus.FINDING_DEVICE;
+
+        enum SystemStatus
+        {
+            FINDING_DEVICE,
+            CONNECTED_DEVICE,
+            DISCONECTED_DEVICE,
+        }
+
 
         public ImageSender()
         {
             InitializeComponent();
-
-            string[] ports = SerialPort.GetPortNames();
-            comboBoxOmapCOM.DataSource = ports;
-
-            if (ports.Length > 0)
-            {
-                comboBoxOmapCOM.Text = ports[0];
-            }
 
             Worker.WorkerReportsProgress = true;
             Worker.WorkerSupportsCancellation = true;
@@ -49,6 +52,54 @@ namespace OMAPSendImage
                 SendImageToOmap();
             };
             Worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(WaitWorkerComplete);
+
+            TrackingWorker.WorkerReportsProgress = true;
+            TrackingWorker.WorkerSupportsCancellation = true;
+            TrackingWorker.DoWork += delegate
+            {
+                SystemTracking();
+            };
+            TrackingWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(SystemTrackingComplete);
+            TrackingWorker.RunWorkerAsync();
+
+            PrintSystemInfo();
+        }
+
+        private void SystemTrackingComplete(object sender, RunWorkerCompletedEventArgs e)
+        {
+            
+        }
+
+        private void SystemTracking()
+        {
+            SetSystemStatus(SystemStatus.FINDING_DEVICE);
+            while(true)
+            {
+                while (true)
+                {
+                    // Find device first
+                    if (GetSystemStatus() != SystemStatus.CONNECTED_DEVICE)
+                    {
+                        SerialPortDetecter detecter = new SerialPortDetecter();
+                        string s = detecter.DetectPort("PING", "XPHONE", 2000);
+                        // if finding decice success
+                        if (!string.IsNullOrEmpty(s))
+                        {
+                            // Open serial port if find device
+                            serialPortOmap.PortName = s;
+                            serialPortOmap.Open();
+
+                            // set system status
+                            SetSystemStatus(SystemStatus.CONNECTED_DEVICE);
+                            break;
+                        }
+                    }
+                }
+
+                // Wait for system raise event
+                TrackingEvent.Reset();
+                TrackingEvent.WaitOne();
+            }
         }
 
         private void WaitWorkerComplete(object sender, RunWorkerCompletedEventArgs e)
@@ -79,26 +130,56 @@ namespace OMAPSendImage
             if (serialPortOmap.IsOpen)
             {
                 TraceLog("Close 1");
-                serialPortOmap.Close();
+                try
+                {
+                    serialPortOmap.Close();
+                }
+                catch
+                {
+                    SetSystemStatus(SystemStatus.DISCONECTED_DEVICE);
+                    TrackingEvent.Set();
+                    return;
+                }
             }
+
             serialPortOmap.BaudRate = BAUD_115200;
             serialPortOmap.DataReceived += serialPortOmap_DataReceived;
             TraceLog("Open 1");
-            serialPortOmap.Open();
+            try
+            {
+                serialPortOmap.Open();
+            }
+            catch
+            {
+                SetSystemStatus(SystemStatus.DISCONECTED_DEVICE);
+                TrackingEvent.Set();
+                return;
+            }
+           
 
             // clear buffer
             serialPortOmap.DiscardInBuffer();
 
-            // Notify OMAP will be get image
-            serialPortOmap.Write("GET_IMG");
- 
+            try
+            {
+                // Notify OMAP will be get image
+                serialPortOmap.Write("GET_IMG");
+            }
+            catch
+            {
+                SetSystemStatus(SystemStatus.DISCONECTED_DEVICE);
+                TrackingEvent.Set();
+                return;
+            }
+
+
             // Wait For OMAP respond
             StartEvent.Reset();
             bool waiteStatus = StartEvent.WaitOne(3000);
 
             if(waiteStatus == false)
             {
-                TraceLog("Timeout wait respond from OMAP!");
+                MessageBox.Show("Phone may be sleep or not connected to PC");
                 return;
             }
 
@@ -108,13 +189,30 @@ namespace OMAPSendImage
             if (serialPortOmap.IsOpen)
             {
                 TraceLog("Close 2");
-                serialPortOmap.Close();
+                try
+                {
+                    serialPortOmap.Close();
+                }
+                catch
+                {
+                    SetSystemStatus(SystemStatus.DISCONECTED_DEVICE);
+                    TrackingEvent.Set();
+                    return;
+                }
             }
-            serialPortOmap.DataReceived -= serialPortOmap_DataReceived;
-            //serialPortOmap.BaudRate = BAUD_921600;
-            TraceLog("Open 2");
-            serialPortOmap.Open();
 
+            serialPortOmap.DataReceived -= serialPortOmap_DataReceived;
+            try
+            {
+                TraceLog("Open 2");
+                serialPortOmap.Open();
+            }
+            catch
+            {
+                SetSystemStatus(SystemStatus.DISCONECTED_DEVICE);
+                TrackingEvent.Set();
+                return;
+            }
 
             DateTime start = DateTime.Now;
 
@@ -129,12 +227,16 @@ namespace OMAPSendImage
                     sendPixel[1] = color.G;
                     sendPixel[2] = color.B;
 
-                    //TraceLog("Send " + i + ":" + j + "\r\n");
-                    serialPortOmap.Write(sendPixel, 0, sendPixel.Length);
-                    //if(j % 20 == 0)
-                    //{
-                    //    Thread.Sleep(1);
-                    //}
+                    try
+                    {
+                        serialPortOmap.Write(sendPixel, 0, sendPixel.Length);
+                    }
+                    catch
+                    {
+                        SetSystemStatus(SystemStatus.DISCONECTED_DEVICE);
+                        TrackingEvent.Set();
+                        return;
+                    }
                 }
                 SetProgressBarValue(i + 1);
                 if(Worker.CancellationPending)
@@ -151,7 +253,7 @@ namespace OMAPSendImage
 
         void TraceLog(string log)
         {
-#if false
+#if true
             if (InvokeRequired)
             {
                 BeginInvoke((MethodInvoker)delegate
@@ -183,56 +285,88 @@ namespace OMAPSendImage
             }
         }
 
-        private void serialPortOmap_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        /// <summary>
+        /// show system info
+        /// </summary>
+        void PrintSystemInfo()
         {
-            SerialPort comport = sender as SerialPort;
-            string content = comport.ReadExisting();
-
-            if (content == "SEND_ME")
+            string systemInfo = "";
+            Color trackingColor = Color.Black;
+            
+            switch (GetSystemStatus())
             {
-                TraceLog("SEND_ME received");
-                TraceLog("Sender: Set");
-
-                Thread.Sleep(10);
-                StartEvent.Set();
+                case SystemStatus.FINDING_DEVICE:
+                    systemInfo = "Finding Phone";
+                    trackingColor = Color.Orange;
+                    break;
+                case SystemStatus.CONNECTED_DEVICE:
+                    systemInfo = "Phone Connected";
+                    trackingColor = Color.Green;
+                    break;
+                case SystemStatus.DISCONECTED_DEVICE:
+                    systemInfo = "Phone Disconnected";
+                    trackingColor = Color.Red;
+                    break;
+                default:
+                    break;
             }
-            else
+
+            mDotCount++;
+            if (mDotCount > 10)
             {
-                TraceLog(content);
+                mDotCount = 0;
+            }
+
+            for (int i = 0; i < mDotCount; i++)
+            {
+                systemInfo += " .";
+            }
+
+            labelSystemTracking.Text = systemInfo;
+            labelSystemTracking.ForeColor = trackingColor;
+        }
+
+        void SetSystemStatus(SystemStatus status)
+        {
+            lock(LockSystemStatus)
+            {
+                mSystemStatus = status;
             }
         }
 
-        private void buttonOpenPort_Click(object sender, EventArgs e)
+        SystemStatus GetSystemStatus()
         {
-            if (!serialPortOmap.IsOpen)
+            SystemStatus status;
+            lock (LockSystemStatus)
             {
-                serialPortOmap.PortName = comboBoxOmapCOM.Text;
-                try
+                status = mSystemStatus;
+            }
+            return status;
+        }
+
+        private void serialPortOmap_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort comport = sender as SerialPort;
+            if(comport.IsOpen)
+            {
+                string content = comport.ReadExisting();
+
+                if (content == "SEND_ME")
                 {
-                    serialPortOmap.Open();
-                    TraceLog("Open 3");
-                    buttonOpenPort.Text = "Close";
-                    TraceLog("Open serial port: " + serialPortOmap.PortName);
+                    TraceLog("SEND_ME received");
+                    TraceLog("Sender: Set");
+
+                    Thread.Sleep(10);
+                    StartEvent.Set();
                 }
-                catch(Exception ex)
+                else
                 {
-                    TraceLog(ex.Message);
+                    TraceLog(content);
                 }
             }
             else
             {
-                try
-                {
-                    TraceLog("Close 3");
-                    serialPortOmap.Close();
-                    TraceLog("Close serial port: " + serialPortOmap.PortName);
-                }
-                catch
-                {
-                    MessageBox.Show("Serial port is open in another process");
-                }
-
-                buttonOpenPort.Text = "Open";
+                TraceLog("Receive serial data while serial port closed");
             }
         }
 
@@ -289,6 +423,11 @@ namespace OMAPSendImage
 
         private void buttonSend_Click(object sender, EventArgs e)
         {
+            if(GetSystemStatus() != SystemStatus.CONNECTED_DEVICE)
+            {
+                return;
+            }
+
             if(!File.Exists(textBoxLinkIMG.Text))
             {
                 MessageBox.Show("File not existed!");
@@ -301,19 +440,15 @@ namespace OMAPSendImage
             }
             else
             {
-                Worker.CancelAsync();
-                buttonSend.Text = "Send";
-            }
-        }
-
-        private void comboBoxOmapCOM_Click(object sender, EventArgs e)
-        {
-            string[] ports = SerialPort.GetPortNames();
-            comboBoxOmapCOM.DataSource = ports;
-
-            if (ports.Length > 0)
-            {
-                comboBoxOmapCOM.Text = ports[0];
+                DialogResult dialogResult = MessageBox.Show("Do you want stop sending image?", "Cancel sending image", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    Worker.CancelAsync();
+                    buttonSend.Text = "Send";
+                }
+                else if (dialogResult == DialogResult.No)
+                {
+                }
             }
         }
 
@@ -327,24 +462,24 @@ namespace OMAPSendImage
 
         private void serialPortOmap_ErrorReceived(object sender, SerialErrorReceivedEventArgs e)
         {
-
+            TraceLog("Error received");
         }
 
         private void serialPortOmap_PinChanged(object sender, SerialPinChangedEventArgs e)
         {
-            if (InvokeRequired)
-            {
-                BeginInvoke((MethodInvoker)delegate
-                {
-                    buttonOpenPort.Text = "Open";
-                });
-            }
-            else
-            {
-                buttonOpenPort.Text = "Open";
-            }
+            TraceLog("Pin Changed");
+        }
 
-            TraceLog("Pin PORT has changed");
+        private void timerTracking_Tick(object sender, EventArgs e)
+        {
+            PrintSystemInfo();
+        }
+
+        // test function
+        private void button1_Click(object sender, EventArgs e)
+        {
+           
+            
         }
     }
 }

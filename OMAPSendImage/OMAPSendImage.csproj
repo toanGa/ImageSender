@@ -68,6 +68,7 @@
     <Compile Include="SendImageToOMAP.Designer.cs">
       <DependentUpon>SendImageToOMAP.cs</DependentUpon>
     </Compile>
+    <Compile Include="SerialPortDetecter.cs" />
     <Compile Include="SimpleProtocol\SimpleProtocol.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
