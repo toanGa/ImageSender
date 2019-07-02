@@ -63,6 +63,9 @@ namespace OMAPSendImage
             TrackingWorker.RunWorkerAsync();
 
             PrintSystemInfo();
+
+            // Disable for relesae mode
+            //textBoxLOG.Visible = false;
         }
 
         private void SystemTrackingComplete(object sender, RunWorkerCompletedEventArgs e)
@@ -81,7 +84,7 @@ namespace OMAPSendImage
                     if (GetSystemStatus() != SystemStatus.CONNECTED_DEVICE)
                     {
                         SerialPortDetecter detecter = new SerialPortDetecter();
-                        string s = detecter.DetectPort("PING", "XPHONE", 2000);
+                        string s = detecter.DetectPort("PING", "XPHONE", 1000);
                         // if finding decice success
                         if (!string.IsNullOrEmpty(s))
                         {
@@ -292,12 +295,15 @@ namespace OMAPSendImage
         {
             string systemInfo = "";
             Color trackingColor = Color.Black;
-            
+            labelMoreInfo.Text = "";
+
             switch (GetSystemStatus())
             {
                 case SystemStatus.FINDING_DEVICE:
                     systemInfo = "Finding Phone";
-                    trackingColor = Color.Orange;
+                    trackingColor = Color.Olive;
+                    labelMoreInfo.ForeColor = trackingColor;
+                    labelMoreInfo.Text = "(Make sure phone connected and wakeup)";
                     break;
                 case SystemStatus.CONNECTED_DEVICE:
                     systemInfo = "Phone Connected";
@@ -351,7 +357,7 @@ namespace OMAPSendImage
             {
                 string content = comport.ReadExisting();
 
-                if (content == "SEND_ME")
+                if (content.Contains("SEND_ME"))
                 {
                     TraceLog("SEND_ME received");
                     TraceLog("Sender: Set");
@@ -361,7 +367,7 @@ namespace OMAPSendImage
                 }
                 else
                 {
-                    TraceLog(content);
+                    //TraceLog(content);
                 }
             }
             else
@@ -475,11 +481,5 @@ namespace OMAPSendImage
             PrintSystemInfo();
         }
 
-        // test function
-        private void button1_Click(object sender, EventArgs e)
-        {
-           
-            
-        }
     }
 }
